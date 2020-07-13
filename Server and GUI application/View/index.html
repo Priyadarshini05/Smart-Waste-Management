@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewpoint" content="width=device-width, initial-scale=1">
+        <title> WASTE MONITORING SYSTEM </title>
+        <link rel="icon" type="png" href="https://img.icons8.com/doodle/48/000000/waste-sorting.png"/>
+        
+        <!--<link rel="icon" type="image/png" href="https://example.com/favicon.png"/>-->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-app.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.min.js"></script>
+            
+        <script src="https://www.gstatic.com/firebasejs/7.15.5/firebase-database.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+        <style>
+
+            button{
+                width:85px;
+                margin-left:10px
+            }
+            #WeightDetail{
+                padding: 60px 0 0 0;
+                text-align: center;
+                margin-left: -103px;
+            }
+            #Weight{
+                font-size:30px
+                
+            }
+        </style>
+        <style>
+            body {
+              background-image: url('https://images.pexels.com/photos/579216/pexels-photo-579216.jpeg');
+              background-repeat: no-repeat;
+              background-attachment: fixed;
+              background-size: 100% 100%;
+            }
+            
+            </style>
+  <!--    <style>
+        body { 
+            background-image: url("https://image.freepik.com/free-vector/trash-recycling-set-with-glass-organic-waste-realistic-isolated_1284-33136.jpg") 
+        }  
+            
+        </style>
+--> 
+
+    </head>
+ 
+    <body id="test">
+
+        <div>
+            
+     <h1 style="font-size:35px;"><center><span><img src='https://img.icons8.com/doodle/48/000000/waste-sorting.png' style="width:2%;margin-right:6px"></span>
+     WASTE MONITORING SYSTEM  <span><img src='https://img.icons8.com/doodle/48/000000/waste-sorting.png' style="width:2%;margin-right:6px"></span></h1> 
+     
+     
+    <!-- <button id="downloadPdf" >Download PDF</button>-->
+     
+        </div>
+     <div>
+         <div>
+            <div id="myChartDetails" style="float:right"> </div>
+         <div style="float:left;width:80%" >
+            
+            <canvas id="myChart" width="400" height="100"></canvas>
+        </div>
+        <div style="float:right;width:10%">
+            <div id="WeightDetail">
+
+            </div>
+            
+        </div>
+        </div>
+
+    </div>
+
+
+        <div style="text-align:left">
+            <button id="Open-Bin1" class="OpenBin"><p>Open Wet Bin</p></button>
+            <button id="Open-Bin2" class="OpenBin"><p>Open Dry Bin</p></button>
+            <!--<button id="Open-Bin3" class="OpenBin"><p>Open Bin3</p></button>-->
+        </div>
+    
+
+        <div style="text-align:center">    
+        <canvas id="Bin1-Daily" width="400" height="100"></canvas>
+        <canvas id="Bin2-Daily" width="400" height="100" style="display:none"></canvas>
+        <!--<canvas id="Bin3-Daily" width="400" height="100" style="display:none"></canvas>-->
+        <button id="Bin1-Daily-Button"><p>Wet Bin</p></button>
+        <button id="Bin2-Daily-Button"><p>Dry Bin</p></button>
+        <!--<button id="Bin3-Daily-Button"><p>Bin3</p></button>-->
+        
+        </div>
+     </div>
+    
+     
+    </body>
+    <script>
+        
+        
+            document.querySelector('#Open-Bin1').addEventListener('click',function(e){
+                
+                fetch('/UpdateLidStatus',{
+                    method:'POST',
+                    headers:{
+                        'Content-type':'application/json'
+                    },
+                    body:JSON.stringify({
+                        'BinNo':'Open-Bin1'
+                    })
+                })
+                .then(data=>{
+                    if(data.status!=200)
+                    alert('Something went wrong!')
+                    else
+                    alert('Wet Bin is opened!')
+                })
+            })
+
+            
+            document.querySelector('#Open-Bin2').addEventListener('click',function(e){
+                
+                fetch('/UpdateLidStatus',{
+                    method:'POST',
+                    headers:{
+                        'Content-type':'application/json'
+                    },
+                    body:JSON.stringify({
+                        'BinNo':'Open-Bin2'
+                    })
+                })
+                .then(data=>{
+                    if(data.status!=200)
+                    alert('Something went wrong')
+                    else
+                    alert('Dry Bin is opened!')
+                })
+            })
+
+            
+            
+        
+        document.querySelector('#Bin1-Daily-Button').addEventListener('click',function(){
+            document.querySelector('#Bin1-Daily').setAttribute('style','display:block');
+            document.querySelector('#Bin2-Daily').setAttribute('style','display:none');
+            //document.querySelector('#Bin3-Daily').setAttribute('style','display:none');
+        })
+        document.querySelector('#Bin2-Daily-Button').addEventListener('click',function(){
+            document.querySelector('#Bin1-Daily').setAttribute('style','display:none');
+            document.querySelector('#Bin2-Daily').setAttribute('style','display:block');
+           // document.querySelector('#Bin3-Daily').setAttribute('style','display:none');
+        })
+       /* document.querySelector('#Bin3-Daily-Button').addEventListener('click',function(){
+            document.querySelector('#Bin1-Daily').setAttribute('style','display:none');
+            document.querySelector('#Bin2-Daily').setAttribute('style','display:none');
+            document.querySelector('#Bin3-Daily').setAttribute('style','display:block');
+        })*/
+        
+        function DisplayChart(data,labels,id,chart_type,chart_title){
+        if(chart_type=='bar'){
+            background_color =  [
+                'rgba(255,215,0,0.8)',
+                'rgba(0,250,154,0.8)'
+                
+                
+            ]
+            
+        }
+        else{
+            background_color = 'rgba(220,20,60,0.7)'
+        }
+            
+        var myChart = new Chart(document.getElementById(id).getContext('2d'), {
+        type: chart_type,
+        data: {
+        labels: labels,
+        datasets: [{
+            label: 'Level of Garbage - Last Collected Data in %',
+            data: data,
+            backgroundColor:background_color,
+            borderWidth: 1
+        }]
+        },
+        options: {
+        legend:{
+            display:false
+        },
+        title:{
+            display:true,
+            text:chart_title
+        },
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero: true
+                }
+            }]
+        }
+        }
+    });
+
+        }
+        
+    // Data Fetching
+        async function BillLevelData(data){
+            background_color =  [
+                
+                'rgba(255,215,0,0.8)',
+                'rgba(0,250,154,0.8)'
+                
+                
+            ]
+            
+            input_data = [data['DryUltrasonic'],data['WetUltrasonic']]
+            input_labels = ['Dry Waste','Wet Waste']
+            
+            var chartDetails = document.querySelector('#myChartDetails')
+            
+            chartDetails.innerHTML = `<table><tr><td style='background-color:${background_color[0]};width:40%'></td><td style='font-size:24px'>${data['DryUltrasonic'].toFixed(2)} % Dry Waste</td></tr><tr><td style='background-color:${background_color[1]};width:40%'></td><td style='font-size:24px'>${data['WetUltrasonic'].toFixed(2)} % Wet Waste</td></tr></table>`
+            
+            DisplayChart(input_data,input_labels,'myChart','bar', 'Real Time Monitoring of Waste (%)')
+        }
+
+        
+
+       async function DisplayDailyData(data){
+           
+            input_data_bin1 = []
+            input_data_bin2 = []
+            
+            input_labels_daily = []
+            
+            CurrentDateValue = new Date().setHours(0,0,0,0)
+            console.log(CurrentDateValue)
+            data.forEach(item=>{
+                DateValue = new Date(item['DateAndTime']).setHours(0,0,0,0)
+                console.log(DateValue)
+                if(DateValue == CurrentDateValue){
+                    
+                input_data_bin1.push(item['WetBinLevel'])
+                input_data_bin2.push(item['DryBinLevel'])
+                
+                input_labels_daily.push(item['DateAndTime'].split('T')[1].split('.')[0])
+                }
+
+            })
+            
+            DisplayChart(input_data_bin1,input_labels_daily,'Bin1-Daily','line','Waste Level Timeline (%)')
+            DisplayChart(input_data_bin2,input_labels_daily,'Bin2-Daily','line','Waste Level Timeline  (%)')
+            
+            
+        }
+
+        var ValueCount = 0
+        var BinLevels = {
+            "Bin1":0,
+            "Bin2":0,
+            "Bin1Weight":0
+        }
+
+        
+                        NullData={
+                            "WetUltrasonic": 0,
+                            "DryUltrasonic": 0
+                        }
+                        BillLevelData(NullData)
+                        document.querySelector('#WeightDetail').innerHTML =`<p id="Weight">0 kg Wet Waste</p>`
+
+        setInterval(function(){
+            fetch('/GetData')
+            .then(data=>{
+                data.json()
+                .then(value=>{
+                    if((BinLevels['Bin1']!=value['WetUltrasonic']) | (BinLevels['Bin2']!=value['DryUltrasonic'])){
+                        BillLevelData(value)
+                        
+                        BinLevels['Bin1']=value['WetUltrasonic']
+                        BinLevels['Bin2']=value['DryUltrasonic']
+                    }
+                    
+                    if(ValueCount != value.BinTrend.length){
+                        DisplayDailyData(value.BinTrend) 
+                        ValueCount = value.BinTrend.length
+                    }
+                    if((BinLevels['Bin1Weight']!=parseFloat(value['WetWeight']).toFixed(2)) ){
+                        document.querySelector('#WeightDetail').innerHTML = `<p id="Weight">${parseFloat(value['WetWeight']).toFixed(2)} kg Wet Waste</p>`
+                        BinLevels['Bin1Weight']=value['WetWeight']
+                        
+                    }
+                    
+                    
+                })
+            })
+
+        },2000)
+
+        
+
+
+    </script>
+    </html>
